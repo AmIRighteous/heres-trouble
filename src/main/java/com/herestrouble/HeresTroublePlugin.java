@@ -6,11 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.StatChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,11 @@ public class HeresTroublePlugin extends Plugin
 
 	@Inject
 	private HeresTroubleConfig config;
+
+	@Inject
+	private SoundEngine soundEngine;
+
+	private HashMap<Skill, Integer> exp = new HashMap<>();
 
 	private Map<Integer, Boolean> friendsMap = new HashMap<>();
 
@@ -53,7 +61,16 @@ public class HeresTroublePlugin extends Plugin
 //	}
 
 	@Subscribe
-	public void onGameTick(GameTick e) {
+	public void onStatChanged(StatChanged e) throws IOException {
+		exp.computeIfAbsent(e.getSkill(), k -> e.getXp());
+
+		if (e.getXp() != exp.get(e.getSkill())) {
+			soundEngine.playClip(Sound.WOO);
+		}
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick e) throws FileNotFoundException {
 		if (heresTroubleTimer > 0) {
 			heresTroubleTimer--;
 		}
@@ -62,6 +79,7 @@ public class HeresTroublePlugin extends Plugin
 			for (Player p : players) {
 				if (p.isFriend() && !friendsMap.containsKey(p.getId())) {
 					friendsMap.put(p.getId(), true);
+					soundEngine.playClip(Sound.HERES_TROUBLE);
 					client.getLocalPlayer().setOverheadText("Here's trouble");
 					client.getLocalPlayer().setOverheadCycle(200);
 				}
