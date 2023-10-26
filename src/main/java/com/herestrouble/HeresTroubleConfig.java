@@ -8,16 +8,6 @@ import net.runelite.client.config.ConfigItem;
 public interface HeresTroubleConfig extends Config
 {
 	@ConfigItem(
-		keyName = "greeting",
-		name = "Welcome Greeting",
-		description = "The message to show to the user when they login"
-	)
-	default String greeting()
-	{
-		return "Hello";
-	}
-
-	@ConfigItem(
 			keyName = "friends",
 			name = "Friends List",
 			description = "Play sound when you see a player on your friends list."
@@ -33,6 +23,15 @@ public interface HeresTroubleConfig extends Config
 	)
 	default boolean clanMembers() {
 		return true;
+	}
+
+	@ConfigItem(
+			keyName = "volume",
+			name = "Volume",
+			description = "Volume of sounds generated from plugin."
+	)
+	default int pluginVolume() {
+		return 100;
 	}
 
 }

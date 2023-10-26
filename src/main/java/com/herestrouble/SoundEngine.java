@@ -1,8 +1,8 @@
 package com.herestrouble;
 
 import lombok.extern.slf4j.Slf4j;
-import org.lwjgl.opencl.CL;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sound.sampled.*;
 import java.io.BufferedInputStream;
@@ -13,6 +13,10 @@ import java.io.InputStream;
 @Singleton
 @Slf4j
 public class SoundEngine {
+
+    @Inject
+    private HeresTroubleConfig config;
+
     private static final long CLIP_MTIME_UNLOADED = -2;
     private long lastClipMTime = CLIP_MTIME_UNLOADED;
     private Clip clip = null;
@@ -49,7 +53,7 @@ public class SoundEngine {
         }
 
         FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-        float gain  = 20f * (float) Math.log10(10);
+        float gain  = 20f * (float) Math.log10(config.pluginVolume()/100f);
         gain = Math.min(gain, volume.getMaximum());
         gain = Math.max(gain, volume.getMinimum());
         volume.setValue(gain);

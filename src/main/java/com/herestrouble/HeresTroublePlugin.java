@@ -37,7 +37,7 @@ public class HeresTroublePlugin extends Plugin
 
 	private Map<Integer, Boolean> friendsMap = new HashMap<>();
 
-	private int heresTroubleTimer = 15;
+	private int heresTroubleTimer = 5;
 
 	@Override
 	protected void startUp() throws Exception
@@ -70,6 +70,13 @@ public class HeresTroublePlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onGameStateChanged(GameStateChanged gameStateChanged) {
+		if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN_AUTHENTICATOR) {
+			friendsMap.clear();
+		}
+	}
+
+	@Subscribe
 	public void onGameTick(GameTick e) throws FileNotFoundException {
 		if (heresTroubleTimer > 0) {
 			heresTroubleTimer--;
@@ -77,14 +84,19 @@ public class HeresTroublePlugin extends Plugin
 		else if (config.friendsList() || config.clanMembers()) {
 			List<Player> players = client.getPlayers();
 			for (Player p : players) {
-				if (p.isFriend() && !friendsMap.containsKey(p.getId())) {
+				if (p.isFriend() && !friendsMap.containsKey(p.getId()) && config.friendsList()) {
 					friendsMap.put(p.getId(), true);
 					soundEngine.playClip(Sound.HERES_TROUBLE);
 					client.getLocalPlayer().setOverheadText("Here's trouble");
+					p.setOverheadText("Here's trouble");
+					p.setOverheadCycle(200);
 					client.getLocalPlayer().setOverheadCycle(200);
 				}
 			}
-			heresTroubleTimer = 15;
+			heresTroubleTimer = 5;
+		}
+		else {
+			heresTroubleTimer = 5;
 		}
 	}
 
