@@ -4,6 +4,7 @@ import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.StatChanged;
@@ -14,9 +15,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @PluginDescriptor(
@@ -35,44 +34,39 @@ public class HeresTroublePlugin extends Plugin
 
 	private HashMap<Skill, Integer> exp = new HashMap<>();
 
-	private Map<Integer, Boolean> friendsMap = new HashMap<>();
+	private Set<String> friendsSeen = new HashSet<>();
 
 	private int heresTroubleTimer = 5;
 
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.info("Example started!");
+		log.info("Plugin started");
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
-		log.info("Example stopped!");
-	}
-
-//	@Subscribe
-//	public void onGameStateChanged(GameStateChanged gameStateChanged)
-//	{
-//		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
-//		{
-//			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Example says " + config.greeting(), null);
-//		}
-//	}
-
-	@Subscribe
-	public void onStatChanged(StatChanged e) throws IOException {
-		exp.computeIfAbsent(e.getSkill(), k -> e.getXp());
-
-		if (e.getXp() != exp.get(e.getSkill())) {
-			soundEngine.playClip(Sound.WOO);
-		}
+		log.info("Plugin stopped");
 	}
 
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged) {
 		if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN_AUTHENTICATOR) {
-			friendsMap.clear();
+			friendsSeen.clear();
+		}
+	}
+
+	@Subscribe
+	public void onChatMessage(ChatMessage c) {
+		if (c.getType().equals(ChatMessageType.LOGINLOGOUTNOTIFICATION)) {
+			String text = c.getMessage();
+			log.info("Text found is: " + text);
+			if (text.contains(" has logged out.")) {
+				text = text.replace(" has logged out.", "");
+				String name = text.replaceAll("\\P{Print}", " ");
+				friendsSeen.remove(name);
+			}
 		}
 	}
 
@@ -81,11 +75,12 @@ public class HeresTroublePlugin extends Plugin
 		if (heresTroubleTimer > 0) {
 			heresTroubleTimer--;
 		}
+
 		else if (config.friendsList() || config.clanMembers()) {
 			List<Player> players = client.getPlayers();
 			for (Player p : players) {
-				if (p.isFriend() && !friendsMap.containsKey(p.getId()) && config.friendsList()) {
-					friendsMap.put(p.getId(), true);
+				if (((p.isFriend() && config.friendsList()) || (p.isClanMember() && config.clanMembers())) && !friendsSeen.contains(p.getName()) && p != client.getLocalPlayer()) {
+					friendsSeen.add(p.getName());
 					soundEngine.playClip(Sound.HERES_TROUBLE);
 					client.getLocalPlayer().setOverheadText("Here's trouble");
 					p.setOverheadText("Here's trouble");
