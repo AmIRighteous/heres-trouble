@@ -6,7 +6,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sound.sampled.*;
 import java.io.BufferedInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -21,7 +20,7 @@ public class SoundEngine {
     private long lastClipMTime = CLIP_MTIME_UNLOADED;
     private Clip clip = null;
 
-    private boolean loadClip(Sound sound) throws FileNotFoundException {
+    private boolean loadClip(Sound sound) {
         try (InputStream stream = new BufferedInputStream(SoundFileManager.getSoundStream(sound))) {
             try (AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(stream)) {
                 clip.open(audioInputStream);
@@ -33,7 +32,7 @@ public class SoundEngine {
         return false;
     }
 
-    public long playClip(Sound sound) throws FileNotFoundException {
+    public void playClip(Sound sound) {
         long currentMTime = System.currentTimeMillis();
         if (clip == null || currentMTime != lastClipMTime || !clip.isOpen()) {
             if (clip != null && clip.isOpen()) {
@@ -44,11 +43,11 @@ public class SoundEngine {
             } catch (LineUnavailableException e) {
                 lastClipMTime = CLIP_MTIME_UNLOADED;
                 log.warn("Failed to get clip for here's trouble sound " + sound, e);
-                return -1;
+                return;
             }
             lastClipMTime = currentMTime;
             if (!loadClip(sound)) {
-                return -1;
+                return;
             }
         }
 
@@ -58,7 +57,5 @@ public class SoundEngine {
         gain = Math.max(gain, volume.getMinimum());
         volume.setValue(gain);
         clip.loop(0);
-
-        return clip.getMicrosecondLength();
     }
 }

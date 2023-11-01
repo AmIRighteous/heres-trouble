@@ -7,14 +7,12 @@ import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.StatChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.*;
 
 @Slf4j
@@ -31,8 +29,6 @@ public class HeresTroublePlugin extends Plugin
 
 	@Inject
 	private SoundEngine soundEngine;
-
-	private HashMap<Skill, Integer> exp = new HashMap<>();
 
 	private Set<String> friendsSeen = new HashSet<>();
 
@@ -61,17 +57,16 @@ public class HeresTroublePlugin extends Plugin
 	public void onChatMessage(ChatMessage c) {
 		if (c.getType().equals(ChatMessageType.LOGINLOGOUTNOTIFICATION)) {
 			String text = c.getMessage();
-			log.info("Text found is: " + text);
 			if (text.contains(" has logged out.")) {
 				text = text.replace(" has logged out.", "");
-				String name = text.replaceAll("\\P{Print}", " ");
+				String name = text.replaceAll("\\P{Print}", " "); //spaces sometimes read as unicode, so replace unicode chars with spaces
 				friendsSeen.remove(name);
 			}
 		}
 	}
 
 	@Subscribe
-	public void onGameTick(GameTick e) throws FileNotFoundException {
+	public void onGameTick(GameTick e) {
 		if (heresTroubleTimer > 0) {
 			heresTroubleTimer--;
 		}
@@ -81,7 +76,8 @@ public class HeresTroublePlugin extends Plugin
 			for (Player p : players) {
 				if (((p.isFriend() && config.friendsList()) || (p.isClanMember() && config.clanMembers())) && !friendsSeen.contains(p.getName()) && p != client.getLocalPlayer()) {
 					friendsSeen.add(p.getName());
-					soundEngine.playClip(Sound.HERES_TROUBLE);
+					int troubleNum = (int) Math.ceil(Math.random()*3);
+					soundEngine.playClip(Sound.getSound(troubleNum));
 					client.getLocalPlayer().setOverheadText("Here's trouble");
 					p.setOverheadText("Here's trouble");
 					p.setOverheadCycle(200);
