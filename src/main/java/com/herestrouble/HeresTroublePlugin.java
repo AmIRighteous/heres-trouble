@@ -34,18 +34,6 @@ public class HeresTroublePlugin extends Plugin
 
 	private int heresTroubleTimer = 5;
 
-	@Override
-	protected void startUp() throws Exception
-	{
-		log.info("Plugin started");
-	}
-
-	@Override
-	protected void shutDown() throws Exception
-	{
-		log.info("Plugin stopped");
-	}
-
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged) {
 		if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN_AUTHENTICATOR) {
